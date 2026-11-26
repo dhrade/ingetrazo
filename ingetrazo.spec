@@ -280,11 +280,20 @@ print('spec: mapbox_earcut native files: %d' % len(_earcut_libs))
 # Ship the validated native ownership fix as a binary so PyInstaller
 # processes and signs the library with the rest of the macOS bundle.
 if sys.platform == 'darwin':
-    _cocoa_fix = ROOT / 'build' / 'macos' / 'libingetrazo_cocoa_accessibility.dylib'
-    if not _cocoa_fix.is_file():
-        raise SystemExit('Build the Cocoa accessibility fix first: '
-                         'python -m core.macos_accessibility')
-    _earcut_libs.append((str(_cocoa_fix), 'resources/native'))
+    import PySide6 as _pyside6
+    from PySide6.QtCore import qVersion as _qt_version
+    import platform as _platform
+    _runtime = (_pyside6.__version__, _qt_version())
+    if _runtime == ('6.11.2', '6.11.2'):
+        _cocoa_fix = ROOT / 'build' / 'macos' / 'libingetrazo_cocoa_accessibility.dylib'
+        if not _cocoa_fix.is_file():
+            raise SystemExit('Build the Cocoa accessibility fix first: '
+                             'python -m core.macos_accessibility')
+        _earcut_libs.append((str(_cocoa_fix), 'resources/native'))
+    elif _runtime == ('6.9.3', '6.9.3') and _platform.machine() == 'x86_64':
+        print('spec: Monterey Intel Qt 6.9.3 does not use the Qt 6.11.2 Cocoa shim')
+    else:
+        raise SystemExit(f'Unsupported macOS Qt runtime for packaging: {_runtime}')
 
 excludes = [
     'tkinter',
