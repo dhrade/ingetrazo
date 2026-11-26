@@ -14,10 +14,10 @@ PySide6==6.11.2; sys_platform == "darwin" and platform_machine == "arm64"
 # Other platforms keep the tested 6.11 series until a newer minor is tried.
 PySide6>=6.7,<6.12; sys_platform != "darwin"
 hidapi>=0.14,<1; sys_platform == "darwin"  # optional SpaceMouse fallback
-# 2.5.x macOS wheels require macOS 14.0 even on Intel. Pin 2.1.3:
-# its x86_64 wheel supports Monterey (12.0), while its arm64 wheel
-# meets the macOS 14.0 deployment target.
-numpy==2.1.3
+# openskp 1.4 requires NumPy >=2.2.6. On Intel macOS the 2.2.6 wheel
+# targets macOS 14, so release-macos.yml builds this pinned version from
+# source with MACOSX_DEPLOYMENT_TARGET=12.0. arm64 uses its compatible wheel.
+numpy==2.2.6
 # .skp import AND export (pure Python, VFF 2021+ AND classic MFC 2013-2020,
 # plus the legacy-format writer behind the .skp export, currently off).
 # Upstream main: single-pass VFF reader (#439), its allocation and collector
