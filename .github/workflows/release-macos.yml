@@ -38,6 +38,7 @@ jobs:
             deployment_target: "14.0"
           - runner: macos-15-intel  # Intel; the .dmg is named by uname -m
             arch: x86_64
+            deployment_target: "12.0"
     steps:
       - uses: actions/checkout@v4
 
@@ -88,6 +89,11 @@ jobs:
           otool -L "$GITHUB_WORKSPACE/vendor/libredwg/bin/dwg2dxf"
           "$GITHUB_WORKSPACE/vendor/libredwg/bin/dwg2dxf" --version || true
 
+      - name: Native Cocoa accessibility regression tests
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_macos_accessibility_fix.py tests/test_macos_accessibility.py
+
       - name: Build IngeTrazo.app and the .dmg
         env:
           PYTHON: python
@@ -96,10 +102,9 @@ jobs:
       - name: The bundle finds everything it needs
         run: dist/IngeTrazo.app/Contents/MacOS/ingetrazo --check
 
-      # A report: it must not hold up a package that was fine.
+      # Every bundled Mach-O must run on the deployment target, including Intel Monterey.
       - name: No Mach-O asks for a newer macOS
         if: matrix.deployment_target
-        continue-on-error: true
         run: python scripts/check_macos_minos.py dist/IngeTrazo.app "${{ matrix.deployment_target }}"
 
       - uses: actions/upload-artifact@v4
