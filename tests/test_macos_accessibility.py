@@ -30,7 +30,8 @@ _NATIVE_REPLAY = textwrap.dedent("""\
     from PySide6.QtWidgets import (QAbstractItemView, QApplication,
                                   QTableWidget, QTableWidgetItem,
                                   QTreeWidgetItem)
-    from core.macos_accessibility import install_cocoa_accessibility_fix
+    from core.macos_accessibility import (cocoa_accessibility_fix_required,
+                                          install_cocoa_accessibility_fix)
     from views import outliner
 
     scenario = sys.argv[1]
@@ -38,7 +39,8 @@ _NATIVE_REPLAY = textwrap.dedent("""\
     assert app.platformName() == "cocoa"
     app.setQuitOnLastWindowClosed(False)
     QStandardPaths.setTestModeEnabled(True)
-    assert install_cocoa_accessibility_fix(app) is True
+    expected_fix = cocoa_accessibility_fix_required()
+    assert install_cocoa_accessibility_fix(app) is expected_fix
     QAccessible.setActive(True)
 
     # These are the same Objective-C attribute entry points AppKit invokes
