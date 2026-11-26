@@ -311,11 +311,14 @@ def _self_check() -> int:
 
     problems: list[str] = []
     if sys.platform == "darwin" and is_frozen():
-        from core.macos_accessibility import LIBRARY_NAME
-        cocoa_fix = root / "resources" / "native" / LIBRARY_NAME
-        print(f"  Cocoa a11y fix : {'found' if cocoa_fix.is_file() else 'MISSING'}  {cocoa_fix}")
-        if not cocoa_fix.is_file():
-            problems.append("Cocoa accessibility fix")
+        from core.macos_accessibility import LIBRARY_NAME, cocoa_accessibility_fix_required
+        if cocoa_accessibility_fix_required():
+            cocoa_fix = root / "resources" / "native" / LIBRARY_NAME
+            print(f"  Cocoa a11y fix : {'found' if cocoa_fix.is_file() else 'MISSING'}  {cocoa_fix}")
+            if not cocoa_fix.is_file():
+                problems.append("Cocoa accessibility fix")
+        else:
+            print("  Cocoa a11y fix : not required by this pinned Qt runtime")
     # Only files something actually reads at runtime.
     for label, path in (
         # Every shader, by name: 0.6.3 shipped without edges.geom, and the
