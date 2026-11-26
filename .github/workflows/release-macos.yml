@@ -10,7 +10,7 @@
 #
 # macos-14 left GitHub Actions on 2026-11-02 (actions/runner-images#13518). A
 # runner sets the floor of what is compiled on it unless told otherwise, so the
-# arm64 job asks for 14.0 and its package keeps asking what it asked before.
+# arm64 job uses 15.0 because the validated Qt 6.11.2 wheel requires macOS 15.0. Intel remains independently targeted at Monterey 12.0.
 name: release-macos
 
 on:
@@ -37,7 +37,7 @@ jobs:
         include:
           - runner: macos-15        # Apple Silicon
             arch: arm64
-            deployment_target: "14.0"
+            deployment_target: "15.0"
           - runner: macos-15-intel  # Intel; the .dmg is named by uname -m
             arch: x86_64
             deployment_target: "12.0"
