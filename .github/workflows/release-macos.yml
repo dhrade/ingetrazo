@@ -16,6 +16,8 @@ name: release-macos
 on:
   push:
     tags: ["v*"]
+  pull_request:
+    branches: [main]
   workflow_dispatch:        # exercise the build without a tag (artifact only)
 
 permissions:
