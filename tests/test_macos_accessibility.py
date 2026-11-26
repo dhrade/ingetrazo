@@ -9,6 +9,7 @@ so Cocoa also drains the autorelease pools that release cached wrappers.
 from __future__ import annotations
 
 import os
+import platform
 from pathlib import Path
 import subprocess
 import sys
@@ -206,7 +207,11 @@ _NATIVE_REPLAY = textwrap.dedent("""\
 """)
 
 
-@pytest.mark.skipif(sys.platform != "darwin", reason="requires native Cocoa accessibility")
+@pytest.mark.skipif(
+    sys.platform != "darwin" or platform.machine() == "x86_64",
+    reason=("the native ownership regression replay targets Qt 6.11.2; "
+            "Monterey Intel is pinned to Qt 6.9.3 and must not install that shim"),
+)
 @pytest.mark.parametrize("scenario", ["_Tree", "table"])
 def test_native_accessibility_survives_view_mutations(scenario):
     env = dict(os.environ, QT_QPA_PLATFORM="cocoa")
