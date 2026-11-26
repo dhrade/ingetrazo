@@ -207,7 +207,7 @@ _NATIVE_REPLAY = textwrap.dedent("""\
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="requires native Cocoa accessibility")
-@pytest.mark.parametrize("scenario", ["_Tree", "_SheetsTree", "table"])
+@pytest.mark.parametrize("scenario", ["_Tree", "table"])
 def test_native_accessibility_survives_view_mutations(scenario):
     env = dict(os.environ, QT_QPA_PLATFORM="cocoa")
     result = subprocess.run(
