@@ -109,6 +109,51 @@ jobs:
       - name: The bundle finds everything it needs
         run: dist/IngeTrazo.app/Contents/MacOS/ingetrazo --check
 
+      # --check imports modules and checks resources but never creates a
+      # QApplication or opens the main window. Launch the frozen GUI itself
+      # and require its event loop to remain alive before publishing a DMG.
+      - name: Launch the packaged GUI (startup smoke test)
+        if: matrix.arch == 'x86_64'
+        run: |
+          python - <<'PY'
+          import pathlib
+          import subprocess
+          import sys
+          import tempfile
+          import time
+
+          executable = pathlib.Path("dist/IngeTrazo.app/Contents/MacOS/ingetrazo")
+          if not executable.is_file():
+              raise SystemExit(f"GUI executable missing: {executable}")
+
+          with tempfile.TemporaryFile(mode="w+t") as log:
+              process = subprocess.Popen(
+                  [str(executable)],
+                  stdout=log,
+                  stderr=subprocess.STDOUT,
+                  text=True,
+              )
+              deadline = time.monotonic() + 30
+              while time.monotonic() < deadline and process.poll() is None:
+                  time.sleep(0.5)
+
+              if process.poll() is not None:
+                  log.seek(0)
+                  output = log.read()
+                  print(output[-12000:])
+                  raise SystemExit(
+                      f"GUI exited during startup (exit code {process.returncode})"
+                  )
+
+              print("GUI process remained alive for 30 seconds; startup smoke test passed.")
+              process.terminate()
+              try:
+                  process.wait(timeout=10)
+              except subprocess.TimeoutExpired:
+                  process.kill()
+                  process.wait(timeout=5)
+          PY
+
       # Every bundled Mach-O must run on the deployment target, including Intel Monterey.
       - name: No Mach-O asks for a newer macOS
         if: matrix.deployment_target
