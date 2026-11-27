@@ -4,7 +4,8 @@
 from __future__ import annotations
 import sys
 from PySide6.QtCore import QTimer
-from PySide6.QtGui import QOpenGLWindow, QSurfaceFormat
+from PySide6.QtGui import QSurfaceFormat
+from PySide6.QtOpenGL import QOpenGLWindow
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 class ProbeWindow(QOpenGLWindow):
