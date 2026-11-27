@@ -19,7 +19,12 @@ class ProbeWindow(QOpenGLWindow):
             raise RuntimeError("No valid OpenGL context")
         self.initialized = True
         raw = ctx.functions().glGetString(0x1F01)
-        self.renderer = bytes(raw).decode("utf-8", "replace") if raw else "unknown"
+        if isinstance(raw, bytes):
+            self.renderer = raw.decode("utf-8", "replace")
+        elif raw:
+            self.renderer = str(raw)
+        else:
+            self.renderer = "unknown"
     def paintGL(self):
         gl = self.context().functions()
         gl.glClearColor(0.12, 0.18, 0.24, 1.0)
