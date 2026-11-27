@@ -153,7 +153,9 @@ class Vertex:
     __slots__ = ("position", "edges")
 
     def __init__(self, position: QVector3D) -> None:
-        self.position = QVector3D(position)
+        # PySide6 6.8.3 does not expose QVector3D(QVector3D) as a valid
+        # overload. Copy components explicitly; this works across Qt 6 releases.
+        self.position = QVector3D(position.x(), position.y(), position.z())
         self.edges: set[Edge] = set()
 
     def faces(self) -> set[Face]:
