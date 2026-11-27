@@ -290,8 +290,8 @@ if sys.platform == 'darwin':
             raise SystemExit('Build the Cocoa accessibility fix first: '
                              'python -m core.macos_accessibility')
         _earcut_libs.append((str(_cocoa_fix), 'resources/native'))
-    elif _runtime == ('6.9.3', '6.9.3') and _platform.machine() == 'x86_64':
-        print('spec: Monterey Intel Qt 6.9.3 does not use the Qt 6.11.2 Cocoa shim')
+    elif _runtime == ('6.8.3', '6.8.3') and _platform.machine() == 'x86_64':
+        print('spec: Monterey Intel Qt 6.8.3 does not use the Qt 6.11.2 Cocoa shim')
     else:
         raise SystemExit(f'Unsupported macOS Qt runtime for packaging: {_runtime}')
 
