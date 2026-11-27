@@ -186,7 +186,7 @@ def install_cocoa_accessibility_fix(app) -> bool:
 
 def main() -> int:
     if _is_monterey_intel_runtime():
-        print("No Cocoa accessibility shim required for the pinned Intel Qt 6.9.3 runtime.")
+        print("No Cocoa accessibility shim required for the experimental Intel Qt 6.8.3 runtime.")
         return 0
     try:
         output = build_cocoa_accessibility_fix()
