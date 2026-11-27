@@ -7,9 +7,10 @@
 # added only when the feature that needs them actually lands.
 
 # --- Runtime ---
-# The native Cocoa ownership workaround validates this exact Qt runtime.
-# See core/macos_accessibility.py and docs/macos-accessibility.md.
-PySide6==6.9.3; sys_platform == "darwin" and platform_machine == "x86_64"
+# Intel Monterey trial: Qt 6.8.3 publishes a universal2 wheel with a
+# macOS 12.0 deployment target. See core/macos_accessibility.py and
+# docs/macos-accessibility.md; native Cocoa accessibility tests run on Intel.
+PySide6==6.8.3; sys_platform == "darwin" and platform_machine == "x86_64"
 PySide6==6.11.2; sys_platform == "darwin" and platform_machine == "arm64"
 # Other platforms keep the tested 6.11 series until a newer minor is tried.
 PySide6>=6.7,<6.12; sys_platform != "darwin"
