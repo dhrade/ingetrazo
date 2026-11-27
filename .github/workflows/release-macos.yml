@@ -88,6 +88,11 @@ jobs:
           otool -L "$GITHUB_WORKSPACE/vendor/libredwg/bin/dwg2dxf"
           "$GITHUB_WORKSPACE/vendor/libredwg/bin/dwg2dxf" --version || true
 
+      # Isolated feasibility probe; production viewport remains unchanged.
+      - name: Probe QOpenGLWindow inside QWidget container (Intel)
+        if: matrix.arch == 'x86_64'
+        run: python scripts/qopenglwindow_container_probe.py
+
       - name: Build IngeTrazo.app and the .dmg
         env:
           PYTHON: python
