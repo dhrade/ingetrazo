@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Exercise the proposed Qt window-container path on an Intel macOS runner.
+# This is a feasibility check only; it does not change the production viewport.
+name: macOS Intel OpenGL container probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/macos-opengl-probe.yml"
+      - "scripts/qopenglwindow_container_probe.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qopenglwindow-container:
+    name: QOpenGLWindow container (Intel)
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Match the Qt version being evaluated for the Monterey Intel build.
+      - name: Install Qt for Intel
+        run: python -m pip install "PySide6==6.8.3"
+
+      - name: Probe native OpenGL window inside QWidget container
+        run: python scripts/qopenglwindow_container_probe.py
