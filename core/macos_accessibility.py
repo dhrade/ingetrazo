@@ -21,6 +21,7 @@ from core.paths import app_root, is_frozen
 
 
 QT_VERSION = "6.11.2"
+MONTEREY_QT_VERSION = "6.8.3"
 LIBRARY_NAME = "libingetrazo_cocoa_accessibility.dylib"
 
 # Do not unload a library whose function pointers are installed in Qt's
@@ -94,6 +95,24 @@ def build_cocoa_accessibility_fix() -> Path:
     return output
 
 
+def cocoa_accessibility_fix_required() -> bool:
+    """Whether this exact macOS Qt runtime needs the 6.11.2 ownership shim."""
+    if sys.platform != "darwin":
+        return False
+    import PySide6
+    from PySide6.QtCore import qVersion
+    return PySide6.__version__ == QT_VERSION and qVersion() == QT_VERSION
+
+
+def _is_monterey_intel_runtime() -> bool:
+    """Qt 6.8.3 is the Monterey Intel trial; it predates the 6.11 ownership regression."""
+    if sys.platform != "darwin" or platform.machine() != "x86_64":
+        return False
+    import PySide6
+    from PySide6.QtCore import qVersion
+    return PySide6.__version__ == MONTEREY_QT_VERSION and qVersion() == MONTEREY_QT_VERSION
+
+
 def _validate_runtime(app) -> None:
     import PySide6
     from PySide6.QtCore import QCoreApplication, QThread, qVersion
@@ -119,6 +138,11 @@ def install_cocoa_accessibility_fix(app) -> bool:
     if app is None:
         raise RuntimeError("Install the Cocoa accessibility fix after creating QApplication.")
     if app.platformName() != "cocoa":
+        return False
+    # Qt 6.8.3 is the experimental Intel/Monterey runtime. The ownership
+    # regression addressed by this shim is specific to Qt 6.11.2; do not patch
+    # Qt internals from a different release or assume its Objective-C layout.
+    if _is_monterey_intel_runtime():
         return False
     _validate_runtime(app)
     if _installed:
@@ -161,6 +185,9 @@ def install_cocoa_accessibility_fix(app) -> bool:
 
 
 def main() -> int:
+    if _is_monterey_intel_runtime():
+        print("No Cocoa accessibility shim required for the experimental Intel Qt 6.8.3 runtime.")
+        return 0
     try:
         output = build_cocoa_accessibility_fix()
     except RuntimeError as error:

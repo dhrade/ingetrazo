@@ -10,12 +10,14 @@
 #
 # macos-14 left GitHub Actions on 2026-11-02 (actions/runner-images#13518). A
 # runner sets the floor of what is compiled on it unless told otherwise, so the
-# arm64 job asks for 14.0 and its package keeps asking what it asked before.
+# arm64 job uses 15.0 because the validated Qt 6.11.2 wheel requires macOS 15.0. Intel remains independently targeted at Monterey 12.0.
 name: release-macos
 
 on:
   push:
     tags: ["v*"]
+  pull_request:
+    branches: [main]
   workflow_dispatch:        # exercise the build without a tag (artifact only)
 
 permissions:
@@ -35,9 +37,10 @@ jobs:
         include:
           - runner: macos-15        # Apple Silicon
             arch: arm64
-            deployment_target: "14.0"
+            deployment_target: "15.0"
           - runner: macos-15-intel  # Intel; the .dmg is named by uname -m
             arch: x86_64
+            deployment_target: "12.0"
     steps:
       - uses: actions/checkout@v4
 
@@ -54,6 +57,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           grep -vE '^\s*pytest\b' requirements.txt > reqs.txt
+          # NumPy 2.2.6's Intel wheel requires macOS 14. Build it from source
+          # on the macos-15-intel runner so its Mach-O minimum stays at 12.0.
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            python -m pip install --no-binary=numpy "numpy==2.2.6"
+          fi
           python -m pip install -r reqs.txt pyinstaller
 
       # The Rust engine (rust/ingetrazo_core, Preferences ▸
@@ -88,6 +96,11 @@ jobs:
           otool -L "$GITHUB_WORKSPACE/vendor/libredwg/bin/dwg2dxf"
           "$GITHUB_WORKSPACE/vendor/libredwg/bin/dwg2dxf" --version || true
 
+      - name: Native Cocoa accessibility regression tests
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_macos_graphics.py tests/test_macos_accessibility_fix.py tests/test_macos_accessibility.py
+
       - name: Build IngeTrazo.app and the .dmg
         env:
           PYTHON: python
@@ -96,10 +109,54 @@ jobs:
       - name: The bundle finds everything it needs
         run: dist/IngeTrazo.app/Contents/MacOS/ingetrazo --check
 
-      # A report: it must not hold up a package that was fine.
+      # --check imports modules and checks resources but never creates a
+      # QApplication or opens the main window. Launch the frozen GUI itself
+      # and require its event loop to remain alive before publishing a DMG.
+      - name: Launch the packaged GUI (startup smoke test)
+        if: matrix.arch == 'x86_64'
+        run: |
+          python - <<'PY'
+          import pathlib
+          import subprocess
+          import sys
+          import tempfile
+          import time
+
+          executable = pathlib.Path("dist/IngeTrazo.app/Contents/MacOS/ingetrazo")
+          if not executable.is_file():
+              raise SystemExit(f"GUI executable missing: {executable}")
+
+          with tempfile.TemporaryFile(mode="w+t") as log:
+              process = subprocess.Popen(
+                  [str(executable)],
+                  stdout=log,
+                  stderr=subprocess.STDOUT,
+                  text=True,
+              )
+              deadline = time.monotonic() + 30
+              while time.monotonic() < deadline and process.poll() is None:
+                  time.sleep(0.5)
+
+              if process.poll() is not None:
+                  log.seek(0)
+                  output = log.read()
+                  print(output[-12000:])
+                  raise SystemExit(
+                      f"GUI exited during startup (exit code {process.returncode})"
+                  )
+
+              print("GUI process remained alive for 30 seconds; startup smoke test passed.")
+              process.terminate()
+              try:
+                  process.wait(timeout=10)
+              except subprocess.TimeoutExpired:
+                  process.kill()
+                  process.wait(timeout=5)
+          PY
+
+      # Every bundled Mach-O must run on the deployment target, including Intel Monterey.
       - name: No Mach-O asks for a newer macOS
         if: matrix.deployment_target
-        continue-on-error: true
         run: python scripts/check_macos_minos.py dist/IngeTrazo.app "${{ matrix.deployment_target }}"
 
       - uses: actions/upload-artifact@v4
