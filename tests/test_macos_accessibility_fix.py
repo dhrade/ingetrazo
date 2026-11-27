@@ -350,6 +350,10 @@ def test_frozen_application_cannot_compile(cocoa, monkeypatch):
 
 
 def test_build_cli_reports_failure_without_traceback(monkeypatch, capsys):
+    # Exercise the shim-required runtime branch; Monterey Intel deliberately
+    # exits successfully without invoking the compiler.
+    monkeypatch.setattr(fix, "_is_monterey_intel_runtime", lambda: False)
+
     def build():
         raise RuntimeError("Command Line Tools are missing")
 

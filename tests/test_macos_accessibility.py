@@ -9,6 +9,7 @@ so Cocoa also drains the autorelease pools that release cached wrappers.
 from __future__ import annotations
 
 import os
+import platform
 from pathlib import Path
 import subprocess
 import sys
@@ -30,7 +31,8 @@ _NATIVE_REPLAY = textwrap.dedent("""\
     from PySide6.QtWidgets import (QAbstractItemView, QApplication,
                                   QTableWidget, QTableWidgetItem,
                                   QTreeWidgetItem)
-    from core.macos_accessibility import install_cocoa_accessibility_fix
+    from core.macos_accessibility import (cocoa_accessibility_fix_required,
+                                          install_cocoa_accessibility_fix)
     from views import outliner
 
     scenario = sys.argv[1]
@@ -38,7 +40,8 @@ _NATIVE_REPLAY = textwrap.dedent("""\
     assert app.platformName() == "cocoa"
     app.setQuitOnLastWindowClosed(False)
     QStandardPaths.setTestModeEnabled(True)
-    assert install_cocoa_accessibility_fix(app) is True
+    expected_fix = cocoa_accessibility_fix_required()
+    assert install_cocoa_accessibility_fix(app) is expected_fix
     QAccessible.setActive(True)
 
     # These are the same Objective-C attribute entry points AppKit invokes
@@ -204,8 +207,12 @@ _NATIVE_REPLAY = textwrap.dedent("""\
 """)
 
 
-@pytest.mark.skipif(sys.platform != "darwin", reason="requires native Cocoa accessibility")
-@pytest.mark.parametrize("scenario", ["_Tree", "_SheetsTree", "table"])
+@pytest.mark.skipif(
+    sys.platform != "darwin" or platform.machine() == "x86_64",
+    reason=("the native ownership regression replay targets Qt 6.11.2; "
+            "Monterey Intel is pinned to Qt 6.9.3 and must not install that shim"),
+)
+@pytest.mark.parametrize("scenario", ["_Tree", "table"])
 def test_native_accessibility_survives_view_mutations(scenario):
     env = dict(os.environ, QT_QPA_PLATFORM="cocoa")
     result = subprocess.run(

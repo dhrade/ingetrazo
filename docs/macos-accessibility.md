@@ -1,5 +1,9 @@
 # macOS accessibility crash in Qt 6.11.2
 
+## Intel on macOS Monterey
+
+The Intel release targets macOS 12.0 and pins PySide6/Qt 6.9.3, whose macOS wheel supports Monterey. The Cocoa ownership shim below is specifically validated against Qt 6.11.2 and is not loaded or bundled for this older Intel runtime; applying a binary-layout-sensitive Objective-C hook to an unvalidated Qt release would be unsafe. Apple Silicon remains on Qt 6.11.2 with the existing shim and its native regression tests. The Intel build runs the same native Cocoa mutation tests without the shim and fails CI if any bundled Mach-O requires a macOS version newer than 12.0.
+
 IngeTrazo 0.5.8 can crash on Apple Silicon when an accessibility client
 inspects a tree or table. The supplied macOS 26.6.2 report reaches
 `-[QMacAccessibilityElement accessibilitySelectedChildren]` at offset

@@ -13,6 +13,13 @@ import os
 import sys
 from pathlib import Path
 
+# Qt 6.9's QWidget backing-store RHI can reset the Intel Broadwell GPU
+# on older macOS systems during window composition. Disable only that
+# optional composition path on Intel Macs; the QOpenGLWidget viewport,
+# OpenGL 3.3 renderer, depth buffer and model tools remain enabled.
+from core.macos_graphics import configure_qt_widget_composition
+configure_qt_widget_composition()
+
 # Before any thread allocates (see core.malloc_arenas).
 from core import malloc_arenas
 malloc_arenas.limit()
@@ -311,11 +318,14 @@ def _self_check() -> int:
 
     problems: list[str] = []
     if sys.platform == "darwin" and is_frozen():
-        from core.macos_accessibility import LIBRARY_NAME
-        cocoa_fix = root / "resources" / "native" / LIBRARY_NAME
-        print(f"  Cocoa a11y fix : {'found' if cocoa_fix.is_file() else 'MISSING'}  {cocoa_fix}")
-        if not cocoa_fix.is_file():
-            problems.append("Cocoa accessibility fix")
+        from core.macos_accessibility import LIBRARY_NAME, cocoa_accessibility_fix_required
+        if cocoa_accessibility_fix_required():
+            cocoa_fix = root / "resources" / "native" / LIBRARY_NAME
+            print(f"  Cocoa a11y fix : {'found' if cocoa_fix.is_file() else 'MISSING'}  {cocoa_fix}")
+            if not cocoa_fix.is_file():
+                problems.append("Cocoa accessibility fix")
+        else:
+            print("  Cocoa a11y fix : not required by this pinned Qt runtime")
     # Only files something actually reads at runtime.
     for label, path in (
         # Every shader, by name: 0.6.3 shipped without edges.geom, and the
