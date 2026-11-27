@@ -101,6 +101,14 @@ jobs:
           python -m pip install pytest
           python -m pytest -q tests/test_macos_graphics.py tests/test_macos_accessibility_fix.py tests/test_macos_accessibility.py
 
+      # Native feasibility spike only: do not alter the production viewport.
+      # This checks QOpenGLWindow presentation through QWidget's container on Intel.
+      - name: Probe QOpenGLWindow inside QWidget container (Intel)
+        if: matrix.arch == 'x86_64'
+        env:
+          QT_MAC_WANTS_LAYER: "1"
+        run: python scripts/qopenglwindow_container_probe.py
+
       - name: Build IngeTrazo.app and the .dmg
         env:
           PYTHON: python
