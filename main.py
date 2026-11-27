@@ -13,6 +13,13 @@ import os
 import sys
 from pathlib import Path
 
+# Qt 6.9's QWidget backing-store RHI can reset the Intel Broadwell GPU
+# on older macOS systems during window composition. Disable only that
+# optional composition path on Intel Macs; the QOpenGLWidget viewport,
+# OpenGL 3.3 renderer, depth buffer and model tools remain enabled.
+from core.macos_graphics import configure_qt_widget_composition
+configure_qt_widget_composition()
+
 # Before any thread allocates (see core.malloc_arenas).
 from core import malloc_arenas
 malloc_arenas.limit()
