@@ -208,8 +208,10 @@ _NATIVE_REPLAY = textwrap.dedent("""\
 
 
 @pytest.mark.skipif(
-    sys.platform != "darwin",
-    reason="the native ownership regression replay requires macOS Cocoa",
+    sys.platform != "darwin" or platform.machine() == "x86_64",
+    reason=("the native ownership regression replay targets the Qt 6.11.2 "
+            "ownership issue; the Intel Qt 6.8.3 experiment must not apply "
+            "that binary-layout-specific replay"),
 )
 @pytest.mark.parametrize("scenario", ["_Tree", "table"])
 def test_native_accessibility_survives_view_mutations(scenario):
