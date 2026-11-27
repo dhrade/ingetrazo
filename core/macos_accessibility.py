@@ -21,7 +21,7 @@ from core.paths import app_root, is_frozen
 
 
 QT_VERSION = "6.11.2"
-MONTEREY_QT_VERSION = "6.9.3"
+MONTEREY_QT_VERSION = "6.8.3"
 LIBRARY_NAME = "libingetrazo_cocoa_accessibility.dylib"
 
 # Do not unload a library whose function pointers are installed in Qt's
@@ -105,7 +105,7 @@ def cocoa_accessibility_fix_required() -> bool:
 
 
 def _is_monterey_intel_runtime() -> bool:
-    """Qt 6.9.3 is the Monterey-compatible Intel build; it predates this regression."""
+    """Qt 6.8.3 is the Monterey Intel trial; it predates the 6.11 ownership regression."""
     if sys.platform != "darwin" or platform.machine() != "x86_64":
         return False
     import PySide6
@@ -139,9 +139,9 @@ def install_cocoa_accessibility_fix(app) -> bool:
         raise RuntimeError("Install the Cocoa accessibility fix after creating QApplication.")
     if app.platformName() != "cocoa":
         return False
-    # Qt 6.9.3 is the pinned Intel/Monterey runtime. The ownership regression
-    # addressed by this shim is specific to Qt 6.11.2; do not patch Qt internals
-    # from a different release or assume its Objective-C layout is identical.
+    # Qt 6.8.3 is the experimental Intel/Monterey runtime. The ownership
+    # regression addressed by this shim is specific to Qt 6.11.2; do not patch
+    # Qt internals from a different release or assume its Objective-C layout.
     if _is_monterey_intel_runtime():
         return False
     _validate_runtime(app)
